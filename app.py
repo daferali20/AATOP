@@ -3,7 +3,12 @@ from dotenv import load_dotenv
 import os
 import requests
 import pandas as pd
+# تحميل ملف CSS
+def load_css():
+    with open(".streamlit/style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+load_css()
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
