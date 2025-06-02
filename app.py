@@ -89,13 +89,21 @@ def get_stock_data(api_key, min_price, max_price):
         df_active = pd.DataFrame(active_data)
         df_gainers = pd.DataFrame(gainers_data)
         
+        # تصفية حسب السعر (1$ إلى 55$)
         df_active_filtered = df_active[(df_active['price'] >= min_price) & (df_active['price'] <= max_price)]
         df_gainers_filtered = df_gainers[(df_gainers['price'] >= min_price) & (df_gainers['price'] <= max_price)]
+        
+        # 🔥🔥 **استبعاد الأسهم التي حدث لها تقسيم عكسي (Split)**:
+        # الشرط: إذا كان "change" أو "changesPercentage" سالبًا، فهذا يعني انخفاض السهم (تقسيم عكسي)
+        df_gainers_filtered = df_gainers_filtered[
+            (df_gainers_filtered['change'] > 0) &  # التغير موجب (ارتفاع)
+            (df_gainers_filtered['changesPercentage'] > 0)  # النسبة المئوية موجبة (ارتفاع)
+        ]
         
         return df_active_filtered, df_gainers_filtered
         
     except Exception as e:
-        st.error(f"حدث خطأ: {str(e)}")
+        st.error(f"حدث خطأ: {e}")
         return pd.DataFrame(), pd.DataFrame()
 
 # زر التحديث
