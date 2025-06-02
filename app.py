@@ -105,35 +105,12 @@ def get_stock_data(api_key, min_price, max_price):
     except Exception as e:
         st.error(f"حدث خطأ: {e}")
         return pd.DataFrame(), pd.DataFrame()
-def render_tradingview_chart():
-    with open("tradingview_chart.html", "r") as f:
-        html_content = f.read()
-        st.components.v1.html(html_content, height=550)
 
-st.title("📈 شارت الأسهم من TradingView")
-
-
-render_tradingview_chart()
 # زر التحديث
 if st.button("🔄 تحديث البيانات", key="refresh_button"):
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
 # عرض البيانات إذا كانت موجودة
-if 'active' in st.session_state:
-    st.subheader("الأسهم الأكثر تداولاً")
-    st.dataframe(
-        st.session_state['active'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
-        column_config={
-            "symbol": "الرمز",
-            "name": "اسم السهم",
-            "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
-            "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
-            "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
-        },
-        hide_index=True,
-        use_container_width=True
-    )
-
 if 'gainers' in st.session_state:
     st.subheader("الأسهم الأكثر ارتفاعاً")
     st.dataframe(
@@ -148,4 +125,27 @@ if 'gainers' in st.session_state:
         hide_index=True,
         use_container_width=True
     )
+    if 'active' in st.session_state:
+    st.subheader("الأسهم الأكثر تداولاً")
+    st.dataframe(
+        st.session_state['active'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
+        column_config={
+            "symbol": "الرمز",
+            "name": "اسم السهم",
+            "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
+            "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
+            "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
+        },
+        hide_index=True,
+        use_container_width=True
+    )
+    #----------
+def render_tradingview_chart():
+    with open("tradingview_chart.html", "r") as f:
+        html_content = f.read()
+        st.components.v1.html(html_content, height=550)
 
+st.title("📈 شارت الأسهم من TradingView")
+
+
+render_tradingview_chart()
