@@ -9,15 +9,7 @@ load_dotenv()
 
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
-def render_tradingview_chart():
-    with open("tradingview_chart.html", "r") as f:
-        html_content = f.read()
-        st.components.v1.html(html_content, height=550)
 
-st.set_page_config(layout="wide")
-st.title("📈 شارت الأسهم من TradingView")
-
-render_tradingview_chart()
 # تحميل ملف CSS المخصص
 def load_custom_css():
     css = """
@@ -113,7 +105,15 @@ def get_stock_data(api_key, min_price, max_price):
     except Exception as e:
         st.error(f"حدث خطأ: {e}")
         return pd.DataFrame(), pd.DataFrame()
+def render_tradingview_chart():
+    with open("tradingview_chart.html", "r") as f:
+        html_content = f.read()
+        st.components.v1.html(html_content, height=550)
 
+st.set_page_config(layout="wide")
+st.title("📈 شارت الأسهم من TradingView")
+
+render_tradingview_chart()
 # زر التحديث
 if st.button("🔄 تحديث البيانات", key="refresh_button"):
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
