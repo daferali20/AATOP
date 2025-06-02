@@ -9,8 +9,7 @@ load_dotenv()
 
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
-st.set_page_config(layout="wide")
-st.title("📈 شارت الأسهم من TradingView")
+
 # تحميل ملف CSS المخصص
 def load_custom_css():
     css = """
