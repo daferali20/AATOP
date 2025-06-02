@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
-
+from dotenv import load_dotenv
+import os
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
