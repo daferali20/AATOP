@@ -3,12 +3,7 @@ from dotenv import load_dotenv
 import os
 import requests
 import pandas as pd
-# تحميل ملف CSS
-def load_css():
-    with open("./style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-load_css()
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
@@ -48,7 +43,12 @@ def get_stock_data(api_key, min_price, max_price):
     except Exception as e:
         st.error(f"حدث خطأ: {e}")
         return pd.DataFrame(), pd.DataFrame()
+# تحميل ملف CSS
+def load_css():
+    with open("./style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+load_css()
 # زر التحديث
 if st.button("🔄 تحديث البيانات"):
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
