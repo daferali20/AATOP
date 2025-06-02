@@ -3,13 +3,13 @@ from dotenv import load_dotenv
 import os
 import requests
 import pandas as pd
-
+import streamlit.components.v1 as components
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
-st.set_page_config(layout="wide")
+
 # تحميل ملف CSS المخصص
 def load_custom_css():
     css = """
