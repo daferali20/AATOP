@@ -7,19 +7,73 @@ import pandas as pd
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
-# استرجاع مفتاح API
-api_key = os.getenv("API_KEY")
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
+
+# تحميل ملف CSS المخصص
+def load_custom_css():
+    css = """
+    <style>
+        /* تنسيق عام */
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333333;
+        }
+        
+        /* العناوين */
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        /* الجداول */
+        .stDataFrame {
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* الأزرار */
+        .stButton>button {
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            padding: 8px 16px;
+            transition: all 0.3s;
+        }
+        
+        .stButton>button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+        
+        /* الشريط الجانبي */
+        .css-1d391kg {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+load_custom_css()
+
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
+
+# استرجاع مفتاح API (مع الأولوية لما يدخله المستخدم)
+default_api_key = os.getenv("API_KEY", "demo")
 
 # شريط جانبي للإعدادات
 with st.sidebar:
     st.header("الإعدادات")
     min_price = st.number_input("الحد الأدنى للسعر ($)", min_value=0.0, value=1.0, step=0.5)
     max_price = st.number_input("الحد الأقصى للسعر ($)", min_value=0.0, value=55.0, step=0.5)
-    api_key = st.text_input("مفتاح API (اختياري)", value="CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv", type="password")
+    user_api_key = st.text_input("مفتاح API (اختياري)", value=default_api_key, type="password")
     st.markdown("[احصل على مفتاح API مجاني](https://financialmodelingprep.com/developer/docs/)")
+
+# استخدام المفتاح الذي أدخله المستخدم أو المفتاح الافتراضي
+api_key = user_api_key if user_api_key else default_api_key
 
 def get_stock_data(api_key, min_price, max_price):
     try:
@@ -41,16 +95,11 @@ def get_stock_data(api_key, min_price, max_price):
         return df_active_filtered, df_gainers_filtered
         
     except Exception as e:
-        st.error(f"حدث خطأ: {e}")
+        st.error(f"حدث خطأ: {str(e)}")
         return pd.DataFrame(), pd.DataFrame()
-# تحميل ملف CSS
-def load_css():
-    with open("./style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-load_css()
 # زر التحديث
-if st.button("🔄 تحديث البيانات"):
+if st.button("🔄 تحديث البيانات", key="refresh_button"):
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
 # عرض البيانات إذا كانت موجودة
