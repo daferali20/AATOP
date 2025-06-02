@@ -11,7 +11,7 @@ with st.sidebar:
     st.header("الإعدادات")
     min_price = st.number_input("الحد الأدنى للسعر ($)", min_value=0.0, value=1.0, step=0.5)
     max_price = st.number_input("الحد الأقصى للسعر ($)", min_value=0.0, value=55.0, step=0.5)
-    api_key = st.text_input("مفتاح API (اختياري)", value="demo", type="password")
+    api_key = st.text_input("مفتاح API (اختياري)", value="CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv", type="password")
     st.markdown("[احصل على مفتاح API مجاني](https://financialmodelingprep.com/developer/docs/)")
 
 def get_stock_data(api_key, min_price, max_price):
