@@ -125,7 +125,7 @@ if 'gainers' in st.session_state:
         hide_index=True,
         use_container_width=True
     )
-    if 'active' in st.session_state:
+if 'active' in st.session_state:
     st.subheader("الأسهم الأكثر تداولاً")
     st.dataframe(
         st.session_state['active'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
