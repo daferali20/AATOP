@@ -62,7 +62,7 @@ load_custom_css()
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
 
 # استرجاع مفتاح API (مع الأولوية لما يدخله المستخدم)
-default_api_key = os.getenv("API_KEY", "demo")
+default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
 
 # شريط جانبي للإعدادات
 with st.sidebar:
