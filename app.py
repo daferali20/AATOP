@@ -1,8 +1,14 @@
 import streamlit as st
-import requests
-import pandas as pd
 from dotenv import load_dotenv
 import os
+import requests
+import pandas as pd
+
+# تحميل المتغيرات من ملف .env
+load_dotenv()
+
+# استرجاع مفتاح API
+api_key = os.getenv("API_KEY")
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
