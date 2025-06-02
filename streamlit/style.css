@@ -41,3 +41,16 @@ h1, h2, h3 {
 p, li, td {
     color: #2c3e50;
 }
+/* تأثيرات حركية */
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* كروت المعلومات */
+.stMetric {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e8f4fc 100%);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
