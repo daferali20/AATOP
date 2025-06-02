@@ -9,7 +9,15 @@ load_dotenv()
 
 # عنوان التطبيق
 st.set_page_config(page_title="الأسهم الأكثر تداولاً وارتفاعاً", layout="wide")
+def render_tradingview_chart():
+    with open("tradingview_chart.html", "r") as f:
+        html_content = f.read()
+        st.components.v1.html(html_content, height=550)
 
+st.set_page_config(layout="wide")
+st.title("📈 شارت الأسهم من TradingView")
+
+render_tradingview_chart()
 # تحميل ملف CSS المخصص
 def load_custom_css():
     css = """
@@ -140,12 +148,4 @@ if 'gainers' in st.session_state:
         hide_index=True,
         use_container_width=True
     )
-def render_tradingview_chart():
-    with open("tradingview_chart.html", "r") as f:
-        html_content = f.read()
-        st.components.v1.html(html_content, height=550)
 
-st.set_page_config(layout="wide")
-st.title("📈 شارت الأسهم من TradingView")
-
-render_tradingview_chart()
