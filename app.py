@@ -111,20 +111,32 @@ if st.button("🔄 تحديث البيانات", key="refresh_button"):
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
 # عرض البيانات إذا كانت موجودة
-if 'gainers' in st.session_state:
-    st.subheader("الأسهم الأكثر ارتفاعاً")
-    st.dataframe(
-        st.session_state['gainers'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
-        column_config={
-            "symbol": "الرمز",
-            "name": "اسم السهم",
-            "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
-            "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
-            "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
-        },
-        hide_index=True,
-        use_container_width=True
-    )
+if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
+    # تصفية الأسهم غير المقسّمة أو المدمجة
+    df = st.session_state['gainers']
+    filtered_df = df[
+        ~df['name'].str.contains("split|merge|reverse split", case=False, na=False)
+    ]
+
+    if not filtered_df.empty:
+        st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
+        st.dataframe(
+            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage']],
+            column_config={
+                "symbol": "🔖 الرمز",
+                "name": "🏢 اسم السهم",
+                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+    else:
+        st.info("لا توجد أسهم مرتفعة غير مقسّمة أو مدمجة حالياً.")
+else:
+    st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
+
 if 'active' in st.session_state:
     st.subheader("الأسهم الأكثر تداولاً")
     st.dataframe(
