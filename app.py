@@ -47,13 +47,52 @@ def load_custom_css():
             padding: 20px;
             border-radius: 10px;
         }
+        .telegram-btn {
+            background-color: #0088cc !important;
+            margin: 10px 0;
+        }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
 
 load_custom_css()
 
+# زر إرسال تلغرام في أعلى الصفحة
+def send_telegram_button(position="top"):
+    if position == "top":
+        col1, col2 = st.columns([4, 1])
+        with col2:
+            if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_top", 
+                        help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
+                send_report()
+    else:
+        st.divider()
+        st.subheader("إرسال التقرير")
+        if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_bottom", 
+                    use_container_width=True, 
+                    help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
+            send_report()
+
+def send_report():
+    if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
+        filtered_df = st.session_state['gainers'][
+            ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
+        ]
+        if not filtered_df.empty:
+            telegram_message = format_gainers_for_telegram(filtered_df)
+            if send_telegram_message(telegram_message):
+                st.session_state['telegram_last_sent'] = datetime.now().isoformat()
+                st.toast("✅ تم إرسال التقرير إلى التلغرام بنجاح!", icon="✅")
+            else:
+                st.toast("❌ فشل في إرسال الرسالة", icon="❌")
+        else:
+            st.warning("⚠️ لا توجد أسهم متاحة للإرسال")
+    else:
+        st.warning("⚠️ يرجى تحديث البيانات أولاً")
+
+# عنوان التطبيق مع زر الإرسال
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
+send_telegram_button(position="top")
 
 # مفاتيح API والتليجرام من .env
 default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
@@ -121,7 +160,7 @@ with st.sidebar:
     user_api_key = st.text_input("مفتاح API (اختياري)", value=default_api_key, type="password")
     
     # زر اختبار إرسال تلغرام
-    if st.button("اختبار إرسال تلغرام"):
+    if st.button("اختبار إرسال تلغرام", key="test_telegram"):
         if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
             filtered_df = st.session_state['gainers'][
                 ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
@@ -129,9 +168,9 @@ with st.sidebar:
             if not filtered_df.empty:
                 telegram_message = format_gainers_for_telegram(filtered_df.head(3))
                 if send_telegram_message(telegram_message):
-                    st.success("تم إرسال رسالة الاختبار بنجاح!")
+                    st.toast("تم إرسال رسالة الاختبار بنجاح!", icon="✅")
                 else:
-                    st.error("فشل في إرسال رسالة الاختبار")
+                    st.toast("فشل في إرسال رسالة الاختبار", icon="❌")
             else:
                 st.warning("لا توجد بيانات متاحة للإرسال")
         else:
@@ -217,6 +256,9 @@ if 'active' in st.session_state:
         use_container_width=True
     )
 
+# زر إرسال تلغرام في أسفل الصفحة
+send_telegram_button(position="bottom")
+
 # تنفيذ إرسال رسالة التليجرام عند الساعة 5 مساءً ولمرة واحدة في اليوم
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     filtered_df = st.session_state['gainers'][
@@ -230,9 +272,7 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
                 success = send_telegram_message(telegram_message)
                 if success:
                     st.session_state['telegram_last_sent'] = date.today().isoformat()
-                    st.success("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة")
-                else:
-                    st.error("❌ فشل في إرسال رسالة تلغرام.")
+                    st.toast("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة تلقائياً", icon="✅")
             except Exception as e:
                 st.error(f"❌ خطأ في إرسال التلغرام: {e}")
 
