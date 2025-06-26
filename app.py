@@ -57,14 +57,18 @@ def load_custom_css():
 
 load_custom_css()
 
-# دالة لإنشاء رسالة التلغرام
-def format_gainers_for_telegram(df):
+# تعريف المتغيرات العامة
+min_price = 1.0
+max_price = 55.0
+
+# دالة لإنشاء رسالة التلغرام مع إضافة min_price و max_price كمعاملات
+def format_gainers_for_telegram(df, price_range):
     if df.empty:
         return None
         
     message = "📈 *الأسهم الأكثر ارتفاعاً اليوم*\n\n"
     message += f"⏰ الوقت: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-    message += f"💰 نطاق السعر: ${min_price}-${max_price}\n\n"
+    message += f"💰 نطاق السعر: ${price_range['min']}-${price_range['max']}\n\n"
     
     # نحدد أعلى 5 أسهم فقط
     top_gainers = df.head(5)
@@ -81,13 +85,13 @@ def format_gainers_for_telegram(df):
     return message
 
 # دالة لإرسال التقرير
-def send_report():
+def send_report(price_range):
     if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
         filtered_df = st.session_state['gainers'][
             ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
         ]
         if not filtered_df.empty:
-            telegram_message = format_gainers_for_telegram(filtered_df)
+            telegram_message = format_gainers_for_telegram(filtered_df, price_range)
             if send_telegram_message(telegram_message):
                 st.session_state['telegram_last_sent'] = datetime.now().isoformat()
                 st.toast("✅ تم إرسال التقرير إلى التلغرام بنجاح!", icon="✅")
@@ -99,24 +103,23 @@ def send_report():
         st.warning("⚠️ يرجى تحديث البيانات أولاً")
 
 # زر إرسال تلغرام في أعلى الصفحة
-def send_telegram_button(position="top"):
+def send_telegram_button(position, price_range):
     if position == "top":
         col1, col2 = st.columns([4, 1])
         with col2:
             if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_top", 
                         help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
-                send_report()
+                send_report(price_range)
     else:
         st.divider()
         st.subheader("إرسال التقرير")
         if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_bottom", 
                     use_container_width=True, 
                     help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
-            send_report()
+            send_report(price_range)
 
 # عنوان التطبيق مع زر الإرسال
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
-send_telegram_button(position="top")
 
 # مفاتيح API والتليجرام من .env
 default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
@@ -160,13 +163,15 @@ with st.sidebar:
     max_price = st.number_input("الحد الأقصى للسعر ($)", min_value=0.0, value=55.0, step=0.5)
     user_api_key = st.text_input("مفتاح API (اختياري)", value=default_api_key, type="password")
     
+    price_range = {'min': min_price, 'max': max_price}
+    
     if st.button("اختبار إرسال تلغرام", key="test_telegram"):
         if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
             filtered_df = st.session_state['gainers'][
                 ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
             ]
             if not filtered_df.empty:
-                telegram_message = format_gainers_for_telegram(filtered_df.head(3))
+                telegram_message = format_gainers_for_telegram(filtered_df.head(3), price_range)
                 if send_telegram_message(telegram_message):
                     st.toast("تم إرسال رسالة الاختبار بنجاح!", icon="✅")
                 else:
@@ -257,7 +262,7 @@ if 'active' in st.session_state:
     )
 
 # زر إرسال تلغرام في أسفل الصفحة
-send_telegram_button(position="bottom")
+send_telegram_button("bottom", price_range)
 
 # تنفيذ إرسال رسالة التليجرام عند الساعة 5 مساءً ولمرة واحدة في اليوم
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
@@ -266,7 +271,7 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     ]
 
     if not filtered_df.empty and should_send_telegram():
-        telegram_message = format_gainers_for_telegram(filtered_df)
+        telegram_message = format_gainers_for_telegram(filtered_df, price_range)
         if telegram_message:
             try:
                 success = send_telegram_message(telegram_message)
@@ -284,3 +289,6 @@ def render_tradingview_chart():
 
 st.title("📈 شارت الأسهم من TradingView")
 render_tradingview_chart()
+
+# زر إرسال تلغرام في أعلى الصفحة (بعد تعريف جميع الدوال والمتغيرات)
+send_telegram_button("top", price_range)
