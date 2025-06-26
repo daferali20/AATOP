@@ -57,8 +57,9 @@ st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ �
 
 # مفاتيح API والتليجرام من .env
 default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
 
 def send_telegram_message(message):
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
