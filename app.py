@@ -4,6 +4,7 @@ import os
 import requests
 import pandas as pd
 import streamlit.components.v1 as components
+from datetime import datetime, date
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
@@ -63,7 +64,64 @@ st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ �
 
 # استرجاع مفتاح API (مع الأولوية لما يدخله المستخدم)
 default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+def send_telegram_message(message):
+    if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+        response = requests.post(url, data=payload)
+        return response.ok
+    else:
+        st.warning("يرجى ضبط TELEGRAM_TOKEN و TELEGRAM_CHAT_ID في ملف .env")
+
+def format_gainers_for_telegram(df):
+    message = "*📈 الأسهم الأكثر ارتفاعاً اليوم:*\n"
+    for _, row in df.iterrows():
+        message += (
+            f"\n🔖 *{row['symbol']}* - {row['name']}\n"
+            f"💵 السعر: ${row['price']:.2f}\n"
+            f"📊 التغيير: {row['change']:.2f}\n"
+            f"📈 النسبة: {row['changesPercentage']:.2f}%\n"
+        )
+    message += "\n📤 تم الإرسال تلقائيًا عبر النظام الذكي."
+    return message
+
+# تحقق من إرسال الرسالة مرة واحدة فقط في اليوم
+today_str = date.today().isoformat()
+if 'telegram_last_sent' not in st.session_state:
+    st.session_state['telegram_last_sent'] = ""
+
+# --- داخل الكتلة التالية: بعد عرض الأسهم المرتفعة ---
+if not filtered_df.empty:
+    st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
+    st.dataframe(
+        filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage']],
+        column_config={
+            "symbol": "🔖 الرمز",
+            "name": "🏢 اسم السهم",
+            "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+            "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+            "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+        },
+        hide_index=True,
+        use_container_width=True
+    )
+
+    # 🟢 إرسال تلقائي لتلغرام مرة واحدة فقط يوميًا
+    if st.session_state['telegram_last_sent'] != today_str:
+        telegram_message = format_gainers_for_telegram(filtered_df.head(5))  # أرسل فقط أول 5 أسهم
+        success = send_telegram_message(telegram_message)
+        if success:
+            st.session_state['telegram_last_sent'] = today_str
+            st.success("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة.")
+        else:
+            st.error("❌ فشل في إرسال رسالة تلغرام.")
 # شريط جانبي للإعدادات
 with st.sidebar:
     st.header("الإعدادات")
