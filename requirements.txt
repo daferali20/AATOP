@@ -4,3 +4,8 @@ pandas
 python-dotenv
 streamlit-autorefresh
 python-telegram-bot
+plotly
+lxml
+vaderSentiment
+textblob
+matplotlib
