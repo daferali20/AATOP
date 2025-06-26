@@ -57,22 +57,30 @@ def load_custom_css():
 
 load_custom_css()
 
-# زر إرسال تلغرام في أعلى الصفحة
-def send_telegram_button(position="top"):
-    if position == "top":
-        col1, col2 = st.columns([4, 1])
-        with col2:
-            if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_top", 
-                        help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
-                send_report()
-    else:
-        st.divider()
-        st.subheader("إرسال التقرير")
-        if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_bottom", 
-                    use_container_width=True, 
-                    help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
-            send_report()
+# دالة لإنشاء رسالة التلغرام
+def format_gainers_for_telegram(df):
+    if df.empty:
+        return None
+        
+    message = "📈 *الأسهم الأكثر ارتفاعاً اليوم*\n\n"
+    message += f"⏰ الوقت: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    message += f"💰 نطاق السعر: ${min_price}-${max_price}\n\n"
+    
+    # نحدد أعلى 5 أسهم فقط
+    top_gainers = df.head(5)
+    
+    for _, row in top_gainers.iterrows():
+        message += (
+            f"🔹 *{row['symbol']}* - {row['name']}\n"
+            f"▫️ السعر: ${row['price']:.2f}\n"
+            f"▫️ التغيير: +{row['change']:.2f} (+{row['changesPercentage']:.2f}%)\n"
+            f"───────────────────\n"
+        )
+    
+    message += "\n📊 *ملاحظة:* هذه الأسهم ليست مقسّمة أو مدمجة"
+    return message
 
+# دالة لإرسال التقرير
 def send_report():
     if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
         filtered_df = st.session_state['gainers'][
@@ -89,6 +97,22 @@ def send_report():
             st.warning("⚠️ لا توجد أسهم متاحة للإرسال")
     else:
         st.warning("⚠️ يرجى تحديث البيانات أولاً")
+
+# زر إرسال تلغرام في أعلى الصفحة
+def send_telegram_button(position="top"):
+    if position == "top":
+        col1, col2 = st.columns([4, 1])
+        with col2:
+            if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_top", 
+                        help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
+                send_report()
+    else:
+        st.divider()
+        st.subheader("إرسال التقرير")
+        if st.button("📤 إرسال التقرير إلى التلغرام", key="send_telegram_bottom", 
+                    use_container_width=True, 
+                    help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
+            send_report()
 
 # عنوان التطبيق مع زر الإرسال
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
@@ -120,35 +144,12 @@ def send_telegram_message(message):
         st.warning("يرجى ضبط TELEGRAM_TOKEN و TELEGRAM_CHAT_ID في ملف .env")
         return False
 
-def format_gainers_for_telegram(df):
-    if df.empty:
-        return None
-        
-    message = "📈 *الأسهم الأكثر ارتفاعاً اليوم*\n\n"
-    message += f"⏰ الوقت: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-    message += f"💰 نطاق السعر: ${min_price}-${max_price}\n\n"
-    
-    # نحدد أعلى 5 أسهم فقط
-    top_gainers = df.head(5)
-    
-    for _, row in top_gainers.iterrows():
-        message += (
-            f"🔹 *{row['symbol']}* - {row['name']}\n"
-            f"▫️ السعر: ${row['price']:.2f}\n"
-            f"▫️ التغيير: +{row['change']:.2f} (+{row['changesPercentage']:.2f}%)\n"
-            f"───────────────────\n"
-        )
-    
-    message += "\n📊 *ملاحظة:* هذه الأسهم ليست مقسّمة أو مدمجة"
-    return message
-
 def should_send_telegram():
     now = datetime.now()
     send_time_start = dt_time(17, 0)  # 5 مساءً
     send_time_end = dt_time(17, 5)    # حتى 5:05 مساءً
     today = date.today().isoformat()
     
-    # ارسال فقط إذا كان الوقت بين 17:00 و 17:05 ولم يتم الإرسال اليوم
     return (send_time_start <= now.time() <= send_time_end) and \
            (st.session_state.get('telegram_last_sent') != today)
 
@@ -159,7 +160,6 @@ with st.sidebar:
     max_price = st.number_input("الحد الأقصى للسعر ($)", min_value=0.0, value=55.0, step=0.5)
     user_api_key = st.text_input("مفتاح API (اختياري)", value=default_api_key, type="password")
     
-    # زر اختبار إرسال تلغرام
     if st.button("اختبار إرسال تلغرام", key="test_telegram"):
         if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
             filtered_df = st.session_state['gainers'][
