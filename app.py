@@ -60,8 +60,10 @@ default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-
 def send_telegram_message(message):
+    if not message:
+        return False
+        
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         payload = {
@@ -69,23 +71,47 @@ def send_telegram_message(message):
             "text": message,
             "parse_mode": "Markdown"
         }
-        response = requests.post(url, data=payload)
-        return response.ok
+        try:
+            response = requests.post(url, data=payload, timeout=10)
+            return response.status_code == 200
+        except Exception as e:
+            st.error(f"خطأ في إرسال التلغرام: {e}")
+            return False
     else:
         st.warning("يرجى ضبط TELEGRAM_TOKEN و TELEGRAM_CHAT_ID في ملف .env")
         return False
 
 def format_gainers_for_telegram(df):
-    message = "*📈 الأسهم الأكثر ارتفاعاً اليوم:*\n"
-    for _, row in df.iterrows():
+    if df.empty:
+        return None
+        
+    message = "📈 *الأسهم الأكثر ارتفاعاً اليوم*\n\n"
+    message += f"⏰ الوقت: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    message += f"💰 نطاق السعر: ${min_price}-${max_price}\n\n"
+    
+    # نحدد أعلى 5 أسهم فقط
+    top_gainers = df.head(5)
+    
+    for _, row in top_gainers.iterrows():
         message += (
-            f"\n🔖 *{row['symbol']}* - {row['name']}\n"
-            f"💵 السعر: ${row['price']:.2f}\n"
-            f"📊 التغيير: {row['change']:.2f}\n"
-            f"📈 النسبة: {row['changesPercentage']:.2f}%\n"
+            f"🔹 *{row['symbol']}* - {row['name']}\n"
+            f"▫️ السعر: ${row['price']:.2f}\n"
+            f"▫️ التغيير: +{row['change']:.2f} (+{row['changesPercentage']:.2f}%)\n"
+            f"───────────────────\n"
         )
-    message += "\n📤 تم الإرسال تلقائيًا عبر النظام الذكي."
+    
+    message += "\n📊 *ملاحظة:* هذه الأسهم ليست مقسّمة أو مدمجة"
     return message
+
+def should_send_telegram():
+    now = datetime.now()
+    send_time_start = dt_time(17, 0)  # 5 مساءً
+    send_time_end = dt_time(17, 5)    # حتى 5:05 مساءً
+    today = date.today().isoformat()
+    
+    # ارسال فقط إذا كان الوقت بين 17:00 و 17:05 ولم يتم الإرسال اليوم
+    return (send_time_start <= now.time() <= send_time_end) and \
+           (st.session_state.get('telegram_last_sent') != today)
 
 # شريط جانبي للإعدادات
 with st.sidebar:
@@ -93,6 +119,24 @@ with st.sidebar:
     min_price = st.number_input("الحد الأدنى للسعر ($)", min_value=0.0, value=1.0, step=0.5)
     max_price = st.number_input("الحد الأقصى للسعر ($)", min_value=0.0, value=55.0, step=0.5)
     user_api_key = st.text_input("مفتاح API (اختياري)", value=default_api_key, type="password")
+    
+    # زر اختبار إرسال تلغرام
+    if st.button("اختبار إرسال تلغرام"):
+        if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
+            filtered_df = st.session_state['gainers'][
+                ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
+            ]
+            if not filtered_df.empty:
+                telegram_message = format_gainers_for_telegram(filtered_df.head(3))
+                if send_telegram_message(telegram_message):
+                    st.success("تم إرسال رسالة الاختبار بنجاح!")
+                else:
+                    st.error("فشل في إرسال رسالة الاختبار")
+            else:
+                st.warning("لا توجد بيانات متاحة للإرسال")
+        else:
+            st.warning("لا توجد بيانات متاحة للإرسال")
+    
     st.markdown("[احصل على مفتاح API مجاني](https://financialmodelingprep.com/developer/docs/)")
 
 api_key = user_api_key if user_api_key else default_api_key
@@ -174,30 +218,25 @@ if 'active' in st.session_state:
     )
 
 # تنفيذ إرسال رسالة التليجرام عند الساعة 5 مساءً ولمرة واحدة في اليوم
-def should_send_telegram(last_sent_date_str):
-    now = datetime.now()
-    send_time = dt_time(17, 0)  # 5 مساءً
-    # ارسال فقط إذا لم يتم الإرسال اليوم، والوقت بعد 5 مساءً
-    return last_sent_date_str != date.today().isoformat() and now.time() >= send_time
-
-if 'telegram_last_sent' not in st.session_state:
-    st.session_state['telegram_last_sent'] = ""
-
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     filtered_df = st.session_state['gainers'][
         ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
     ]
 
-    if not filtered_df.empty and should_send_telegram(st.session_state['telegram_last_sent']):
-        telegram_message = format_gainers_for_telegram(filtered_df.head(5))
-        success = send_telegram_message(telegram_message)
-        if success:
-            st.session_state['telegram_last_sent'] = date.today().isoformat()
-            st.success("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة الساعة 5 مساءً.")
-        else:
-            st.error("❌ فشل في إرسال رسالة تلغرام.")
+    if not filtered_df.empty and should_send_telegram():
+        telegram_message = format_gainers_for_telegram(filtered_df)
+        if telegram_message:
+            try:
+                success = send_telegram_message(telegram_message)
+                if success:
+                    st.session_state['telegram_last_sent'] = date.today().isoformat()
+                    st.success("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة")
+                else:
+                    st.error("❌ فشل في إرسال رسالة تلغرام.")
+            except Exception as e:
+                st.error(f"❌ خطأ في إرسال التلغرام: {e}")
 
-# شارت TradingView (كما في الكود الأصلي)
+# شارت TradingView
 def render_tradingview_chart():
     with open("tradingview_chart.html", "r") as f:
         html_content = f.read()
