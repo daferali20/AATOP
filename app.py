@@ -122,7 +122,7 @@ def send_telegram_button(position, price_range):
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
 
 # مفاتيح API والتليجرام من .env
-default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
+default_api_key = os.getenv("API_KEY", "dIaNorTQjiQuB5D63K2d31yEW8LyxHsz")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
