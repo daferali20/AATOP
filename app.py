@@ -256,22 +256,19 @@ if 'active' in st.session_state:
     if isinstance(st.session_state['active'], pd.DataFrame):
         df = st.session_state['active']
         st.write("🧪 الأعمدة المتوفرة:", df.columns.tolist())
-        st.dataframe(df)
-    df = df.rename(columns={
-        'ticker': 'symbol',
-        'companyName': 'name',
-        'latestPrice': 'price',
-        'changeValue': 'change',
-        'changePercent': 'changesPercentage'
-        })
+       
         required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
 
         if all(col in df.columns for col in required_cols):
             st.dataframe(
-                df[required_cols],
-                column_config={
-                    "symbol": "الرمز",
-                    "name": "اسم السهم",
+                st.dataframe(df)
+            df = df.rename(columns={
+                'ticker': 'symbol',
+                'companyName': 'name',
+                'latestPrice': 'price',
+                'changeValue': 'change',
+                'changePercent': 'changesPercentage'
+                })
                     "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
                     "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
                     "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
