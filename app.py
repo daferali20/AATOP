@@ -122,7 +122,8 @@ def send_telegram_button(position, price_range):
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
 
 # مفاتيح API والتليجرام من .env
-default_api_key = os.getenv("API_KEY", "dIaNorTQjiQuB5D63K2d31yEW8LyxHsz")
+#default_api_key = os.getenv("API_KEY", "dIaNorTQjiQuB5D63K2d31yEW8LyxHsz")
+default_api_key = os.getenv("API_KEY","CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
@@ -246,20 +247,46 @@ else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
 
 # عرض الأسهم الأكثر تداولًا
+import pandas as pd
+
+# عرض الأسهم الأكثر تداولًا
+# ✅ عرض الأسهم الأكثر تداولًا - النسخة المصححة
 if 'active' in st.session_state:
-    st.subheader("الأسهم الأكثر تداولاً")
-    st.dataframe(
-        st.session_state['active'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
-        column_config={
-            "symbol": "الرمز",
-            "name": "اسم السهم",
-            "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
-            "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
-            "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
-        },
-        hide_index=True,
-        use_container_width=True
-    )
+    st.subheader("📊 الأسهم الأكثر تداولاً")
+
+    if isinstance(st.session_state['active'], pd.DataFrame):
+        df = st.session_state['active']
+        st.write("🧪 الأعمدة المتوفرة:", df.columns.tolist())
+
+        # إذا الأعمدة مختلفة، نعيد تسميتها
+        df = df.rename(columns={
+            'ticker': 'symbol',
+            'companyName': 'name',
+            'latestPrice': 'price',
+            'changeValue': 'change',
+            'changePercent': 'changesPercentage'
+        })
+
+        required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+        if all(col in df.columns for col in required_cols):
+            st.dataframe(
+                df[required_cols],
+                column_config={
+                    "symbol": "🔖 الرمز",
+                    "name": "🏢 اسم السهم",
+                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            missing = [col for col in required_cols if col not in df.columns]
+            st.error(f"❌ الأعمدة التالية مفقودة: {missing}")
+    else:
+        st.error("❌ المتغير 'active' ليس DataFrame. تحقق من طريقة إنشائه.")
+
 
 # زر إرسال تلغرام في أسفل الصفحة
 send_telegram_button("bottom", price_range)
