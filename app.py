@@ -246,20 +246,35 @@ else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
 
 # عرض الأسهم الأكثر تداولًا
+import pandas as pd
+
+# عرض الأسهم الأكثر تداولًا
 if 'active' in st.session_state:
     st.subheader("الأسهم الأكثر تداولاً")
-    st.dataframe(
-        st.session_state['active'][['symbol', 'name', 'price', 'change', 'changesPercentage']],
-        column_config={
-            "symbol": "الرمز",
-            "name": "اسم السهم",
-            "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
-            "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
-            "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
-        },
-        hide_index=True,
-        use_container_width=True
-    )
+
+    if isinstance(st.session_state['active'], pd.DataFrame):
+        df = st.session_state['active']
+        required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+
+        if all(col in df.columns for col in required_cols):
+            st.dataframe(
+                df[required_cols],
+                column_config={
+                    "symbol": "الرمز",
+                    "name": "اسم السهم",
+                    "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
+                    "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
+                    "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            missing = [col for col in required_cols if col not in df.columns]
+            st.error(f"❌ الأعمدة التالية مفقودة: {missing}")
+    else:
+        st.error("❌ المتغير 'active' ليس DataFrame. تحقق من طريقة إنشائه.")
+
 
 # زر إرسال تلغرام في أسفل الصفحة
 send_telegram_button("bottom", price_range)
