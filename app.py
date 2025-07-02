@@ -257,8 +257,14 @@ if 'active' in st.session_state:
         df = st.session_state['active']
         st.write("🧪 الأعمدة المتوفرة:", df.columns.tolist())
         st.dataframe(df)
-
-        required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+    df = df.rename(columns={
+        'ticker': 'symbol',
+        'companyName': 'name',
+        'latestPrice': 'price',
+        'changeValue': 'change',
+        'changePercent': 'changesPercentage'
+        })
+        #required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
 
         if all(col in df.columns for col in required_cols):
             st.dataframe(
