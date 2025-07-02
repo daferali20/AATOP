@@ -255,6 +255,9 @@ if 'active' in st.session_state:
 
     if isinstance(st.session_state['active'], pd.DataFrame):
         df = st.session_state['active']
+        st.write("🧪 الأعمدة المتوفرة:", df.columns.tolist())
+        st.dataframe(df)
+
         required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
 
         if all(col in df.columns for col in required_cols):
