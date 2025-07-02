@@ -123,7 +123,7 @@ st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ �
 
 # مفاتيح API والتليجرام من .env
 #default_api_key = os.getenv("API_KEY", "dIaNorTQjiQuB5D63K2d31yEW8LyxHsz")
-default_api_key = os.getenv("API_KEY","d0s63s1r01qkkplt7130d0s63s1r01qkkplt713g")
+default_api_key = os.getenv("API_KEY","CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
