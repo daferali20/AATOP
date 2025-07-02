@@ -264,7 +264,7 @@ if 'active' in st.session_state:
         'changeValue': 'change',
         'changePercent': 'changesPercentage'
         })
-        #required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+        required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
 
         if all(col in df.columns for col in required_cols):
             st.dataframe(
