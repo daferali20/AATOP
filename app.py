@@ -269,13 +269,13 @@ if 'active' in st.session_state:
                 'changeValue': 'change',
                 'changePercent': 'changesPercentage'
                 })
-                    "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
-                    "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
-                    "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
-                },
-                hide_index=True,
-                use_container_width=True
-            )
+                   # "price": st.column_config.NumberColumn("السعر ($)", format="%.2f"),
+                   # "change": st.column_config.NumberColumn("التغيير", format="%.2f"),
+                  #  "changesPercentage": st.column_config.NumberColumn("النسبة المئوية", format="%.2f%%")
+              #  },
+              #  hide_index=True,
+              #  use_container_width=True
+          #  )
         else:
             missing = [col for col in required_cols if col not in df.columns]
             st.error(f"❌ الأعمدة التالية مفقودة: {missing}")
