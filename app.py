@@ -302,7 +302,7 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
                 "اختر سهمًا لعرض الشارت:",
                 options=filtered_df['symbol'].unique(),
                 index=0,
-                key="gainer_chart_select"
+                key="gainer_chart_select"),
      
             
             # عرض الشارت المباشر
