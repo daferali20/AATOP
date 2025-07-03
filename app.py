@@ -222,74 +222,124 @@ count = st_autorefresh(interval=60000, limit=None, key="autorefresh")
 if 'active' not in st.session_state or 'gainers' not in st.session_state:
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
-# تصفية الأسهم الأكثر ارتفاعًا
+import streamlit as st
+import pandas as pd
+
+## ------------------- ##
+## قسم الأسهم الأكثر ارتفاعًا ##
+## ------------------- ##
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     df = st.session_state['gainers']
+    
+    # تصفية الأسهم التي تحتوي على كلمات محددة في الاسم
     filtered_df = df[~df['name'].str.contains("split|merge|reverse split", case=False, na=False)]
-
+    
     if not filtered_df.empty:
         st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
+        
+        # إنشاء عمود جديد يحتوي على روابط الشارت
+        filtered_df['chart'] = filtered_df['symbol'].apply(
+            lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
+        )
+        
+        # عرض البيانات مع روابط الشارت
         st.dataframe(
-            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage']],
+            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
             column_config={
-                "symbol": "🔖 الرمز",
-                "name": "🏢 اسم السهم",
-                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
-                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+                "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
+                "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
+                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
+                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
+                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
+                "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
             },
             hide_index=True,
-            use_container_width=True
+            use_container_width=True,
+            height=(min(len(filtered_df), 10) * 35 + 38  # حساب ارتفاع الجدول ديناميكيًا
         )
+        
+        # قسم لعرض الشارت المضمن
+        st.divider()
+        selected_symbol = st.selectbox(
+            "اختر رمز سهم لعرض الشارت التفاعلي:",
+            options=filtered_df['symbol'].unique(),
+            index=0,
+            key="gainer_chart_select"
+        )
+        
+        # عرض شارت TradingView
+        show_tradingview_chart(selected_symbol)
+        
     else:
         st.info("لا توجد أسهم مرتفعة غير مقسّمة أو مدمجة حالياً.")
 else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
 
-# عرض الأسهم الأكثر تداولًا
-import pandas as pd
-
-# عرض الأسهم الأكثر تداولًا
-# ✅ عرض الأسهم الأكثر تداولًا - النسخة المصححة
+## ------------------- ##
+## قسم الأسهم الأكثر تداولًا ##
+## ------------------- ##
 if 'active' in st.session_state:
     st.subheader("📊 الأسهم الأكثر تداولاً")
-
+    
     if isinstance(st.session_state['active'], pd.DataFrame):
         df = st.session_state['active']
-        st.write("🧪 الأعمدة المتوفرة:", df.columns.tolist())
-
-        # إذا الأعمدة مختلفة، نعيد تسميتها
-        df = df.rename(columns={
+        
+        # توحيد أسماء الأعمدة لضمان التوافق
+        column_mapping = {
             'ticker': 'symbol',
             'companyName': 'name',
             'latestPrice': 'price',
             'changeValue': 'change',
             'changePercent': 'changesPercentage'
-        })
-             # إنشاء عمود جديد بروابط الشارت
-        filtered_df['chart_link'] = filtered_df['symbol'].apply(
-            lambda x: f"[📊 عرض الشارت](https://www.tradingview.com/chart/?symbol={x})"
-        )
+        }
+        
+        # إعادة تسمية الأعمدة إذا لزم الأمر
+        df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
+        
+        # الأعمدة المطلوبة للعرض
         required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+        
         if all(col in df.columns for col in required_cols):
+            # إضافة عمود روابط الشارت
+            df['chart'] = df['symbol'].apply(
+                lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
+            )
+            
             st.dataframe(
-                df[required_cols],
+                df[required_cols + ['chart']],
                 column_config={
-                    "symbol": "🔖 الرمز",
-                    "name": "🏢 اسم السهم",
-                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
-                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+                    "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
+                    "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
+                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
+                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
+                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
+                    "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
                 },
                 hide_index=True,
-                use_container_width=True
+                use_container_width=True,
+                height=(min(len(df), 10) * 35 + 38  # حساب ارتفاع الجدول ديناميكيًا
             )
+            
+            # قسم لعرض الشارت المضمن للأسهم الأكثر تداولًا
+            st.divider()
+            selected_active_symbol = st.selectbox(
+                "اختر رمز سهم لعرض الشارت التفاعلي:",
+                options=df['symbol'].unique(),
+                index=0,
+                key="active_chart_select"
+            )
+            
+            # عرض شارت TradingView
+            show_tradingview_chart(selected_active_symbol)
+            
         else:
-            missing = [col for col in required_cols if col not in df.columns]
-            st.error(f"❌ الأعمدة التالية مفقودة: {missing}")
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            st.error(f"❌ الأعمدة التالية مفقودة في البيانات: {', '.join(missing_cols)}")
+            st.write("الأعمدة المتوفرة:", df.columns.tolist())
     else:
-        st.error("❌ المتغير 'active' ليس DataFrame. تحقق من طريقة إنشائه.")
-
+        st.error("❌ بيانات الأسهم الأكثر تداولاً ليست في صيغة DataFrame")
+else:
+    st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر تداولاً.")
    
 
 
