@@ -227,7 +227,6 @@ if 'active' not in st.session_state or 'gainers' not in st.session_state:
 ## ------------------- ##
 
 # تصفية الأسهم الأكثر ارتفاعًا
-
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     df = st.session_state['gainers']
     filtered_df = df[~df['name'].str.contains("split|merge|reverse split", case=False, na=False)]
@@ -235,22 +234,41 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     if not filtered_df.empty:
         st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
         
-        # حساب ارتفاع الجدول (تم إصلاح القوس المفقود هنا)
-        table_height = (min(len(filtered_df), 10) * 35) + 38  # <-- التصحيح هنا
+        # إضافة عمود روابط الشارت
+        filtered_df['chart'] = filtered_df['symbol'].apply(
+            lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
+        )
         
+        # حساب ارتفاع الجدول (بحد أقصى 10 صفوف)
+        row_count = min(len(filtered_df), 10)
+        table_height = (row_count * 35) + 38
+        
+        # عرض البيانات مع ضمان إغلاق جميع الأقواس
         st.dataframe(
-            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage']],
+            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
             column_config={
                 "symbol": "🔖 الرمز",
                 "name": "🏢 اسم السهم",
                 "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
                 "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%"),
+                "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت")
             },
             hide_index=True,
             use_container_width=True,
             height=table_height
+        )  # <-- تم إغلاق st.dataframe هنا
+        
+        # قسم الشارت التفاعلي
+        selected_symbol = st.selectbox(
+            "اختر سهمًا لعرض الشارت:",
+            options=filtered_df['symbol'].unique(),
+            key="gainer_chart"
         )
+        
+        # يمكنك تفعيل هذا الجزء بعد إنشاء دالة show_tradingview_chart
+        # show_tradingview_chart(selected_symbol)
+        
     else:
         st.info("لا توجد أسهم مرتفعة غير مقسّمة أو مدمجة حالياً.")
 else:
