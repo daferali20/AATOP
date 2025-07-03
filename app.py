@@ -266,7 +266,10 @@ if 'active' in st.session_state:
             'changeValue': 'change',
             'changePercent': 'changesPercentage'
         })
-
+             # إنشاء عمود جديد بروابط الشارت
+        filtered_df['chart_link'] = filtered_df['symbol'].apply(
+            lambda x: f"[📊 عرض الشارت](https://www.tradingview.com/chart/?symbol={x})"
+        )
         required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
         if all(col in df.columns for col in required_cols):
             st.dataframe(
@@ -287,32 +290,9 @@ if 'active' in st.session_state:
     else:
         st.error("❌ المتغير 'active' ليس DataFrame. تحقق من طريقة إنشائه.")
 
-#--------------------------------------==========================================================
+   
 
- # داخل قسم عرض الأسهم الأكثر ارتفاعًا (بعد تصفية filtered_df)
-if not filtered_df.empty:
-    st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
-    
-    # إنشاء عمود جديد بروابط الشارت
-    filtered_df['chart_link'] = filtered_df['symbol'].apply(
-        lambda x: f"[📊 عرض الشارت](https://www.tradingview.com/chart/?symbol={x})"
-    )
-    
-    st.dataframe(
-        filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart_link']],
-        column_config={
-            "symbol": "🔖 الرمز",
-            "name": "🏢 اسم السهم",
-            "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
-            "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-            "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%"),
-            "chart_link": st.column_config.LinkColumn("📊 الشارت", display_text="فتح الشارت")
-        },
-        hide_index=True,
-        use_container_width=True
-    )
 
-#--------------------------------------================================================
 # زر إرسال تلغرام في أسفل الصفحة
 send_telegram_button("bottom", price_range)
 
