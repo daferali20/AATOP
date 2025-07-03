@@ -225,42 +225,36 @@ if 'active' not in st.session_state or 'gainers' not in st.session_state:
 ## ------------------- ##
 ## قسم الأسهم الأكثر ارتفاعًا ##
 ## ------------------- ##
-# عرض الأسهم الأكثر ارتفاعاً
-if not filtered_df.empty:
-    st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
-    
-    # إنشاء عمود جديد يحتوي على روابط الشارت
-    filtered_df['chart'] = filtered_df['symbol'].apply(
-        lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
-    )
-    
-    # حساب ارتفاع الجدول ديناميكياً (بحد أقصى 10 صفوف)
-    table_height = (min(len(filtered_df), 10) * 35 + 38  # تم تصحيح بناء الجملة هنا
-    
-    # عرض البيانات مع روابط الشارت
-    st.dataframe(
-        filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
-        column_config={
-            "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
-            "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
-            "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
-            "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
-            "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
-            "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
-        },
-        hide_index=True,
-        use_container_width=True,
-        height=table_height  # استخدام المتغير المحسوب
-    )
+
+# تصفية الأسهم الأكثر ارتفاعًا
+
+if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
+    df = st.session_state['gainers']
+    filtered_df = df[~df['name'].str.contains("split|merge|reverse split", case=False, na=False)]
+
+    if not filtered_df.empty:
+        st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
         
-        # عرض شارت TradingView
-        show_tradingview_chart(selected_symbol)
+        # حساب ارتفاع الجدول (تم إصلاح القوس المفقود هنا)
+        table_height = (min(len(filtered_df), 10) * 35) + 38  # <-- التصحيح هنا
         
+        st.dataframe(
+            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage']],
+            column_config={
+                "symbol": "🔖 الرمز",
+                "name": "🏢 اسم السهم",
+                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%")
+            },
+            hide_index=True,
+            use_container_width=True,
+            height=table_height
+        )
     else:
         st.info("لا توجد أسهم مرتفعة غير مقسّمة أو مدمجة حالياً.")
 else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
-
 ## ------------------- ##
 ## قسم الأسهم الأكثر تداولًا ##
 ## ------------------- ##
