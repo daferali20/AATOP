@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-# تحميل متغيرات البيئة
+# تحميل متغيرات البيئة 
 load_dotenv()
 
 # إعداد الصفحة
