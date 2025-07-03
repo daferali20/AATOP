@@ -222,9 +222,6 @@ count = st_autorefresh(interval=60000, limit=None, key="autorefresh")
 if 'active' not in st.session_state or 'gainers' not in st.session_state:
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
-import streamlit as st
-import pandas as pd
-
 ## ------------------- ##
 ## قسم الأسهم الأكثر ارتفاعًا ##
 ## ------------------- ##
