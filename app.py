@@ -204,22 +204,28 @@ if not df_gainers.empty:
     filtered = df_gainers[~df_gainers['name'].str.contains("split|merge|reverse split", case=False, na=False)]
     if not filtered.empty:
         st.subheader("🚀 الأسهم الأكثر ارتفاعاً")
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            filtered['chart'] = filtered['symbol'].apply(lambda x: f"https://tradingview.com/chart/?symbol={x}")
-            st.dataframe(filtered[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
-                         column_config={
-                             "symbol": "🔖 الرمز",
-                             "name": "🏢 الاسم",
-                             "price": st.column_config.NumberColumn("💵 السعر", format="%.2f"),
-                             "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                             "changesPercentage": st.column_config.NumberColumn("📈 النسبة %", format="%.2f%%"),
-                             "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض")
-                         },
-                         use_container_width=True, hide_index=True)
-        with col2:
-            selected = st.selectbox("📌 اختر سهمًا:", filtered["symbol"].unique())
-            show_tradingview_chart(selected)
+        
+        # إنشاء رابط الشارت
+        filtered['chart'] = filtered['symbol'].apply(lambda x: f"https://tradingview.com/chart/?symbol={x}")
+        
+        # عرض الجدول
+        st.dataframe(filtered[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
+                     column_config={
+                         "symbol": "🔖 الرمز",
+                         "name": "🏢 الاسم",
+                         "price": st.column_config.NumberColumn("💵 السعر", format="%.2f"),
+                         "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                         "changesPercentage": st.column_config.NumberColumn("📈 النسبة %", format="%.2f%%"),
+                         "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض")
+                     },
+                     use_container_width=True, hide_index=True)
+
+        # اختيار السهم أسفل الجدول
+        selected = st.selectbox("📌 اختر سهمًا لعرض الشارت:", filtered["symbol"].unique(), key="gainer_chart_select")
+
+        # عرض الشارت تحت الجدول
+        show_tradingview_chart(selected)
+
     else:
         st.info("لا توجد أسهم مؤهلة للعرض.")
 else:
