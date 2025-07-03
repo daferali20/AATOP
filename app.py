@@ -231,28 +231,28 @@ if not df_gainers.empty:
 else:
     st.warning("لم يتم تحميل البيانات بعد.")
 
-# عرض الأسهم الأكثر تداولاً
-df_active = st.session_state.get("active", pd.DataFrame())
-if not df_active.empty:
-    st.subheader("📊 الأسهم الأكثر تداولاً")
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        df_active['chart'] = df_active['symbol'].apply(lambda x: f"https://tradingview.com/chart/?symbol={x}")
-        st.dataframe(df_active[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
-                     column_config={
-                         "symbol": "🔖 الرمز",
-                         "name": "🏢 الاسم",
-                         "price": st.column_config.NumberColumn("💵 السعر", format="%.2f"),
-                         "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                         "changesPercentage": st.column_config.NumberColumn("📈 النسبة %", format="%.2f%%"),
-                         "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض")
-                     },
-                     use_container_width=True, hide_index=True)
-    with col2:
-        selected = st.selectbox("📌 اختر سهمًا:", df_active["symbol"].unique())
-        show_tradingview_chart(selected)
-else:
-    st.warning("لا توجد بيانات للأسهم الأكثر تداولاً.")
+# عرض الأسهم الأكثر تداولاً==========================================================================
+#df_active = st.session_state.get("active", pd.DataFrame())
+#if not df_active.empty:
+#    st.subheader("📊 الأسهم الأكثر تداولاً")
+#    col1, col2 = st.columns([3, 1])
+#    with col1:
+ #       df_active['chart'] = df_active['symbol'].apply(lambda x: f"https://tradingview.com/chart/?symbol={x}")
+#        st.dataframe(df_active[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
+#                     column_config={
+ #                        "symbol": "🔖 الرمز",
+#                         "name": "🏢 الاسم",
+#                         "price": st.column_config.NumberColumn("💵 السعر", format="%.2f"),
+#                         "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+#                         "changesPercentage": st.column_config.NumberColumn("📈 النسبة %", format="%.2f%%"),
+#                         "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض")
+#                     },
+#                     use_container_width=True, hide_index=True)
+#    with col2:
+#        selected = st.selectbox("📌 اختر سهمًا:", df_active["symbol"].unique())
+#        show_tradingview_chart(selected)
+#else:
+  #  st.warning("لا توجد بيانات للأسهم الأكثر تداولاً.")#
 
 # زر التلغرام أسفل الصفحة
 send_telegram_button("bottom", price_range)
