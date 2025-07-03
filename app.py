@@ -51,6 +51,12 @@ def load_custom_css():
             background-color: #0088cc !important;
             margin: 10px 0;
         }
+        .tradingview-chart {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 20px;
+        }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -61,7 +67,41 @@ load_custom_css()
 min_price = 1.0
 max_price = 55.0
 
-# دالة لإنشاء رسالة التلغرام مع إضافة min_price و max_price كمعاملات
+# دالة لعرض شارت TradingView
+def show_tradingview_chart(symbol):
+    """يعرض شارت TradingView للرمز المحدد"""
+    html_code = f"""
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+      <div id="tradingview_{symbol}" style="height: 500px;"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+      <script type="text/javascript">
+        new TradingView.widget(
+          {{
+            "autosize": true,
+            "symbol": "{symbol}",
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "light",
+            "style": "1",
+            "locale": "ar",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_top_toolbar": false,
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_{symbol}"
+          }}
+        );
+      </script>
+    </div>
+    <!-- TradingView Widget END -->
+    """
+    st.markdown("<div class='tradingview-chart'>", unsafe_allow_html=True)
+    components.html(html_code, height=550)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# دالة لإنشاء رسالة التلغرام
 def format_gainers_for_telegram(df, price_range):
     if df.empty:
         return None
@@ -81,7 +121,7 @@ def format_gainers_for_telegram(df, price_range):
             f"───────────────────\n"
         )
     
-    message += "\n📊 *ملاحظة مهمه :* هذه الأسهم ليست توصية  للمضاربه اللحظية قد يؤدي التداول فيها الى خسائر فادحه او ارباح عاليه  انها عالية المخاطر خلك حذر عند التداول فيها او قم بمراجعة القوائم المالية او سبب ارتفاعها"
+    message += "\n📊 *ملاحظة مهمة:* هذه الأسهم ليست توصية للمضاربة اللحظية"
     return message
 
 # دالة لإرسال التقرير
@@ -102,7 +142,7 @@ def send_report(price_range):
     else:
         st.warning("⚠️ يرجى تحديث البيانات أولاً")
 
-# زر إرسال تلغرام في أعلى الصفحة
+# زر إرسال تلغرام
 def send_telegram_button(position, price_range):
     if position == "top":
         col1, col2 = st.columns([4, 1])
@@ -118,12 +158,11 @@ def send_telegram_button(position, price_range):
                     help="إرسال قائمة الأسهم الأكثر ارتفاعاً إلى قناة التلغرام"):
             send_report(price_range)
 
-# عنوان التطبيق مع زر الإرسال
+# عنوان التطبيق
 st.title("📈 الأسهم الأكثر تداولاً وارتفاعاً (1$ إلى 55$)")
 
 # مفاتيح API والتليجرام من .env
-#default_api_key = os.getenv("API_KEY", "dIaNorTQjiQuB5D63K2d31yEW8LyxHsz")
-default_api_key = os.getenv("API_KEY","CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
+default_api_key = os.getenv("API_KEY", "CVROqS2TTsTM06ZNpYQJd5C1dXg1Amuv")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
@@ -222,11 +261,10 @@ count = st_autorefresh(interval=60000, limit=None, key="autorefresh")
 if 'active' not in st.session_state or 'gainers' not in st.session_state:
     st.session_state['active'], st.session_state['gainers'] = get_stock_data(api_key, min_price, max_price)
 
-## ------------------- ##
-## قسم الأسهم الأكثر ارتفاعًا ##
-## ------------------- ##
+# زر إرسال تلغرام في أعلى الصفحة
+send_telegram_button("top", price_range)
 
-# تصفية الأسهم الأكثر ارتفاعًا
+# قسم الأسهم الأكثر ارتفاعًا
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     df = st.session_state['gainers']
     filtered_df = df[~df['name'].str.contains("split|merge|reverse split", case=False, na=False)]
@@ -234,55 +272,55 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     if not filtered_df.empty:
         st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
         
-        # إضافة عمود روابط الشارت
-        filtered_df['chart'] = filtered_df['symbol'].apply(
-            lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
-        )
+        # إنشاء أعمدة للعرض
+        col1, col2 = st.columns([3, 1])
         
-        # حساب ارتفاع الجدول (بحد أقصى 10 صفوف)
-        row_count = min(len(filtered_df), 10)
-        table_height = (row_count * 35) + 38
+        with col1:
+            # عرض الجدول مع روابط الشارت
+            filtered_df['chart'] = filtered_df['symbol'].apply(
+                lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
+            )
+            
+            st.dataframe(
+                filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
+                column_config={
+                    "symbol": "🔖 الرمز",
+                    "name": "🏢 اسم السهم",
+                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%"),
+                    "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض في نافذة جديدة")
+                },
+                hide_index=True,
+                use_container_width=True,
+                height=(min(len(filtered_df), 10) * 35) + 38
+            )
         
-        # عرض البيانات مع ضمان إغلاق جميع الأقواس
-        st.dataframe(
-            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
-            column_config={
-                "symbol": "🔖 الرمز",
-                "name": "🏢 اسم السهم",
-                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
-                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
-                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%"),
-                "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت")
-            },
-            hide_index=True,
-            use_container_width=True,
-            height=table_height
-        )  # <-- تم إغلاق st.dataframe هنا
-        
-        # قسم الشارت التفاعلي
-        selected_symbol = st.selectbox(
-            "اختر سهمًا لعرض الشارت:",
-            options=filtered_df['symbol'].unique(),
-            key="gainer_chart"
-        )
-        
-        # يمكنك تفعيل هذا الجزء بعد إنشاء دالة show_tradingview_chart
-        # show_tradingview_chart(selected_symbol)
+        with col2:
+            # اختيار السهم لعرض الشارت
+            selected_symbol = st.selectbox(
+                "اختر سهمًا لعرض الشارت:",
+                options=filtered_df['symbol'].unique(),
+                index=0,
+                key="gainer_chart_select"
+            ))
+            
+            # عرض الشارت المباشر
+            show_tradingview_chart(selected_symbol)
         
     else:
         st.info("لا توجد أسهم مرتفعة غير مقسّمة أو مدمجة حالياً.")
 else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر ارتفاعاً.")
-## ------------------- ##
-## قسم الأسهم الأكثر تداولًا ##
-## ------------------- ##
+
+# قسم الأسهم الأكثر تداولًا
 if 'active' in st.session_state:
     st.subheader("📊 الأسهم الأكثر تداولاً")
     
     if isinstance(st.session_state['active'], pd.DataFrame):
         df = st.session_state['active']
         
-        # توحيد أسماء الأعمدة لضمان التوافق
+        # توحيد أسماء الأعمدة
         column_mapping = {
             'ticker': 'symbol',
             'companyName': 'name',
@@ -291,60 +329,53 @@ if 'active' in st.session_state:
             'changePercent': 'changesPercentage'
         }
         
-        # إعادة تسمية الأعمدة إذا لزم الأمر
         df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
         
-        # الأعمدة المطلوبة للعرض
-        required_cols = ['symbol', 'name', 'price', 'change', 'changesPercentage']
+        # إنشاء أعمدة للعرض
+        col1, col2 = st.columns([3, 1])
         
-        if all(col in df.columns for col in required_cols):
-            # إضافة عمود روابط الشارت
+        with col1:
+            # عرض الجدول مع روابط الشارت
             df['chart'] = df['symbol'].apply(
                 lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
             )
             
             st.dataframe(
-                df[required_cols + ['chart']],
+                df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
                 column_config={
-                    "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
-                    "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
-                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
-                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
-                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
-                    "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
+                    "symbol": "🔖 الرمز",
+                    "name": "🏢 اسم السهم",
+                    "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f"),
+                    "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f"),
+                    "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%"),
+                    "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض في نافذة جديدة")
                 },
                 hide_index=True,
                 use_container_width=True,
-                height=(min(len(df), 10) * 35 + 38  # حساب ارتفاع الجدول ديناميكيًا
+                height=(min(len(df), 10) * 35) + 38
             )
-            
-            # قسم لعرض الشارت المضمن للأسهم الأكثر تداولًا
-            st.divider()
-            selected_active_symbol = st.selectbox(
-                "اختر رمز سهم لعرض الشارت التفاعلي:",
+        
+        with col2:
+            # اختيار السهم لعرض الشارت
+            selected_active = st.selectbox(
+                "اختر سهمًا لعرض الشارت:",
                 options=df['symbol'].unique(),
                 index=0,
                 key="active_chart_select"
             )
             
-            # عرض شارت TradingView
-            show_tradingview_chart(selected_active_symbol)
-            
-        else:
-            missing_cols = [col for col in required_cols if col not in df.columns]
-            st.error(f"❌ الأعمدة التالية مفقودة في البيانات: {', '.join(missing_cols)}")
-            st.write("الأعمدة المتوفرة:", df.columns.tolist())
+            # عرض الشارت المباشر
+            show_tradingview_chart(selected_active)
+    
     else:
         st.error("❌ بيانات الأسهم الأكثر تداولاً ليست في صيغة DataFrame")
 else:
     st.warning("لا توجد بيانات حالياً عن الأسهم الأكثر تداولاً.")
-   
-
 
 # زر إرسال تلغرام في أسفل الصفحة
 send_telegram_button("bottom", price_range)
 
-# تنفيذ إرسال رسالة التليجرام عند الساعة 5 مساءً ولمرة واحدة في اليوم
+# إرسال تلقائي عند الساعة 5 مساءً
 if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
     filtered_df = st.session_state['gainers'][
         ~st.session_state['gainers']['name'].str.contains("split|merge|reverse split", case=False, na=False)
@@ -360,15 +391,3 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
                     st.toast("✅ تم إرسال رسالة تلغرام بالأسهم المرتفعة تلقائياً", icon="✅")
             except Exception as e:
                 st.error(f"❌ خطأ في إرسال التلغرام: {e}")
-
-# شارت TradingView
-def render_tradingview_chart():
-    with open("tradingview_chart.html", "r") as f:
-        html_content = f.read()
-        st.components.v1.html(html_content, height=550)
-
-st.title("📈 شارت الأسهم من TradingView")
-render_tradingview_chart()
-
-# زر إرسال تلغرام في أعلى الصفحة (بعد تعريف جميع الدوال والمتغيرات)
-send_telegram_button("top", price_range)
