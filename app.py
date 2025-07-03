@@ -303,7 +303,7 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
                 options=filtered_df['symbol'].unique(),
                 index=0,
                 key="gainer_chart_select"
-            ))
+     
             
             # عرض الشارت المباشر
             show_tradingview_chart(selected_symbol)
