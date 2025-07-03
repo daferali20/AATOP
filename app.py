@@ -252,7 +252,7 @@ if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
             },
             hide_index=True,
             use_container_width=True,
-            height=(min(len(filtered_df), 10) * 35 + 38  # حساب ارتفاع الجدول ديناميكيًا
+            height=(min(len(filtered_df), 10) * 35 + 38)  # حساب ارتفاع الجدول ديناميكيًا
         )
         
         # قسم لعرض الشارت المضمن
