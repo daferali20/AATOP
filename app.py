@@ -225,44 +225,33 @@ if 'active' not in st.session_state or 'gainers' not in st.session_state:
 ## ------------------- ##
 ## قسم الأسهم الأكثر ارتفاعًا ##
 ## ------------------- ##
-if 'gainers' in st.session_state and not st.session_state['gainers'].empty:
-    df = st.session_state['gainers']
+# عرض الأسهم الأكثر ارتفاعاً
+if not filtered_df.empty:
+    st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
     
-    # تصفية الأسهم التي تحتوي على كلمات محددة في الاسم
-    filtered_df = df[~df['name'].str.contains("split|merge|reverse split", case=False, na=False)]
+    # إنشاء عمود جديد يحتوي على روابط الشارت
+    filtered_df['chart'] = filtered_df['symbol'].apply(
+        lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
+    )
     
-    if not filtered_df.empty:
-        st.subheader("📈 الأسهم الأكثر ارتفاعاً (غير مقسّمة أو مدمجة)")
-        
-        # إنشاء عمود جديد يحتوي على روابط الشارت
-        filtered_df['chart'] = filtered_df['symbol'].apply(
-            lambda x: f"https://www.tradingview.com/chart/?symbol={x}"
-        )
-        
-        # عرض البيانات مع روابط الشارت
-        st.dataframe(
-            filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
-            column_config={
-                "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
-                "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
-                "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
-                "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
-                "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
-                "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
-            },
-            hide_index=True,
-            use_container_width=True,
-            height=(min(len(filtered_df), 10) * 35 + 38)  # حساب ارتفاع الجدول ديناميكيًا
-        )
-        
-        # قسم لعرض الشارت المضمن
-        st.divider()
-        selected_symbol = st.selectbox(
-            "اختر رمز سهم لعرض الشارت التفاعلي:",
-            options=filtered_df['symbol'].unique(),
-            index=0,
-            key="gainer_chart_select"
-        )
+    # حساب ارتفاع الجدول ديناميكياً (بحد أقصى 10 صفوف)
+    table_height = (min(len(filtered_df), 10) * 35 + 38  # تم تصحيح بناء الجملة هنا
+    
+    # عرض البيانات مع روابط الشارت
+    st.dataframe(
+        filtered_df[['symbol', 'name', 'price', 'change', 'changesPercentage', 'chart']],
+        column_config={
+            "symbol": st.column_config.TextColumn("🔖 الرمز", width="small"),
+            "name": st.column_config.TextColumn("🏢 اسم السهم", width="medium"),
+            "price": st.column_config.NumberColumn("💵 السعر ($)", format="%.2f", width="small"),
+            "change": st.column_config.NumberColumn("📊 التغيير", format="%.2f", width="small"),
+            "changesPercentage": st.column_config.NumberColumn("📈 النسبة المئوية", format="%.2f%%", width="small"),
+            "chart": st.column_config.LinkColumn("📊 الشارت", display_text="عرض الشارت", width="small")
+        },
+        hide_index=True,
+        use_container_width=True,
+        height=table_height  # استخدام المتغير المحسوب
+    )
         
         # عرض شارت TradingView
         show_tradingview_chart(selected_symbol)
